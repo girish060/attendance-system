@@ -62,14 +62,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (!data) {
-        console.error('No profile found for user. Please contact admin.');
-        throw new Error('Profile not found. Please sign up again or contact administrator.');
-      } else {
-        setProfile(data);
+        console.warn('No profile found for user, signing out...');
+        // Sign out user if profile doesn't exist
+        await supabase.auth.signOut();
+        setProfile(null);
+        setLoading(false);
+        return;
       }
+      
+      setProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);
-      // Sign out user if profile doesn't exist
+      // Sign out user on error
       await supabase.auth.signOut();
       setProfile(null);
     } finally {
