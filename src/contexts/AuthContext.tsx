@@ -110,33 +110,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('User creation failed');
 
-      // Generate a unique employee ID if one already exists
-      let finalEmployeeId = employeeId;
-      const { data: existingProfiles } = await supabase
-        .from('profiles')
-        .select('employee_id')
-        .eq('employee_id', employeeId);
-      
-      if (existingProfiles && existingProfiles.length > 0) {
-        finalEmployeeId = `${employeeId}_${Date.now()}`;
-        console.log('Employee ID conflict, using:', finalEmployeeId);
-      }
-
-      const { error: profileError } = await supabase.from('profiles').insert({
-        id: authData.user.id,
-        full_name: fullName,
-        email,
-        employee_id: finalEmployeeId,
-        department,
-        role,
-      });
-
-      console.log('Profile creation result:', { profileError });
-
-      if (profileError) {
-        console.error('Profile creation error:', profileError);
-        throw profileError;
-      }
+      // Profile is automatically created by database trigger
+      // Wait a moment for the trigger to complete
+      await new Promise(resolve => setTimeout(resolve, 500));
 
       return { error: null };
     } catch (error) {
