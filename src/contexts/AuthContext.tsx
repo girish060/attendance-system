@@ -62,43 +62,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (!data) {
-        console.log('No profile found, creating one...');
-        // Create a basic profile if none exists
-        const { data: newProfile, error: insertError } = await supabase
-          .from('profiles')
-          .insert({
-            id: userId,
-            email: user?.email || 'unknown@example.com',
-            full_name: 'User',
-            department: 'Engineering',
-            employee_id: 'USR001',
-            role: 'user'
-          })
-          .select()
-          .single();
-        
-        if (insertError) {
-          console.error('Error creating profile:', insertError);
-          throw insertError;
-        }
-        
-        setProfile(newProfile);
+        console.error('No profile found for user. Please contact admin.');
+        throw new Error('Profile not found. Please sign up again or contact administrator.');
       } else {
         setProfile(data);
       }
     } catch (error) {
       console.error('Error loading profile:', error);
-      // Set a default profile to prevent infinite loading
-      setProfile({
-        id: userId,
-        email: user?.email || 'unknown@example.com',
-        full_name: 'User',
-        department: 'Engineering',
-        employee_id: 'USR001',
-        role: 'user',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString()
-      });
+      // Sign out user if profile doesn't exist
+      await supabase.auth.signOut();
+      setProfile(null);
     } finally {
       setLoading(false);
     }
