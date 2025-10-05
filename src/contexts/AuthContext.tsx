@@ -95,6 +95,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
         email,
         password,
+        options: {
+          data: {
+            full_name: fullName,
+            employee_id: employeeId,
+            department,
+            role,
+          },
+        },
       });
 
       console.log('Auth signup result:', { authData, signUpError });
