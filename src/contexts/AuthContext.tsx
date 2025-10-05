@@ -62,15 +62,34 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
       
       if (!data) {
-        console.warn('No profile found for user, signing out...');
-        // Sign out user if profile doesn't exist
-        await supabase.auth.signOut();
-        setProfile(null);
-        setLoading(false);
-        return;
+        console.warn('No profile found for user, creating default profile...');
+        // Create a basic profile if none exists
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: userId,
+            email: user?.email || 'unknown@example.com',
+            full_name: user?.user_metadata?.full_name || 'User',
+            employee_id: user?.user_metadata?.employee_id || `EMP_${userId.substring(0, 8)}`,
+            department: user?.user_metadata?.department || 'Engineering',
+            role: user?.user_metadata?.role || 'user'
+          })
+          .select()
+          .single();
+        
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          // Sign out if we can't create profile
+          await supabase.auth.signOut();
+          setProfile(null);
+          setLoading(false);
+          return;
+        }
+        
+        setProfile(newProfile);
+      } else {
+        setProfile(data);
       }
-      
-      setProfile(data);
     } catch (error) {
       console.error('Error loading profile:', error);
       // Sign out user on error
@@ -150,8 +169,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = async () => {
-    await supabase.auth.signOut();
-    setProfile(null);
+    try {
+      await supabase.auth.signOut();
+      setProfile(null);
+      setUser(null);
+      // Force clear any cached session
+      localStorage.clear();
+      sessionStorage.clear();
+      // Reload to ensure clean state
+      window.location.reload();
+    } catch (error) {
+      console.error('Sign out error:', error);
+      // Force clear even on error
+      localStorage.clear();
+      sessionStorage.clear();
+      window.location.reload();
+    }
   };
 
   const isAdmin = profile?.role === 'admin';
