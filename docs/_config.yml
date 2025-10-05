@@ -1,0 +1,14 @@
+# Disable Jekyll processing for GitHub Pages
+# This file tells GitHub Pages to skip Jekyll entirely
+plugins: []
+markdown: kramdown
+highlighter: rouge
+safe: true
+lsi: false
+excerpt_separator: "\n\n"
+incremental: false
+
+
+
+
+
