@@ -110,9 +110,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       if (signUpError) throw signUpError;
       if (!authData.user) throw new Error('User creation failed');
 
-      // Profile is automatically created by database trigger
-      // Wait a moment for the trigger to complete
-      await new Promise(resolve => setTimeout(resolve, 500));
+      // Create profile manually (trigger might not be set up yet)
+      const { error: profileError } = await supabase.from('profiles').insert({
+        id: authData.user.id,
+        full_name: fullName,
+        email,
+        employee_id: employeeId,
+        department,
+        role,
+      });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError);
+        // If it's a duplicate, that's okay (trigger already created it)
+        if (!profileError.message.includes('duplicate') && !profileError.message.includes('unique')) {
+          throw profileError;
+        }
+      }
 
       return { error: null };
     } catch (error) {
